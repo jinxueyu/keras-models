@@ -1,4 +1,7 @@
+from google.colab import drive
+drive.mount("/content/gdrive")
 
+!mkdir /root/.ssh
 
 key = '''-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn
@@ -30,21 +33,12 @@ DrGak7xOlIixm8G8oQAAABAyODc2NjU1MzBAcXEuY29tAQ==
 '''
 with open(r'/root/.ssh/id_rsa', 'w', encoding='utf8') as fh:
     fh.write(key)
-
-pub_key='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC9eizgWMM12klfjKvpSHLA9eDG6gBf9aCNrxWVwutzo6NR5RZgRcGqiN3nQeDpDe10/DkH/nxaP1HdUN59eU3zAqDeHknFrjBDwIXv5JqDWlCaBlxbUHZI0EuKIEMuJkVGWHqSknzZjMSSLKLNcxI08wvZ/4YzGAeOHbz20Ras1/6rZPvMxDQRUxpsOsBYIuGCfR/zRvidQMgRGYd8sefOkB6bQGF43YFTk8R1C9xIe2shQiW+kfKHpWSXlWrfLY/i6Y0wb8kDQQNQWLvSl1SGH9jhopYwpTnzkIOS1568G8csByIdbFTe6YpB012ByLL4kNA8mTvjj6qpsRDsRjFp 287665530@qq.com'
-with open(r'/root/.ssh/id_rsa.pub', 'w', encoding='utf8') as fh:
-    fh.write(pub_key)
     
-!chmod 600 /root/.ssh/id_rsa.pub
-!ssh-keyscan github.com >> /root/.ssh/known_hosts    
+!chmod 600 /root/.ssh/id_rsa
 !ssh-keyscan github.com >> /root/.ssh/known_hosts
 !git config --global user.email "287665530@qq.com"
-
-from google.colab import drive
-drive.mount("/content/gdrive")
 
 import os
 os.chdir('/content/gdrive/My Drive/Colab Notebooks/workshop/keras-models/src/main/py')
 
-cd /xxxx/xxxx
-!git clone git@github.com:jinxueyu/keras-models.git
+!git pull    

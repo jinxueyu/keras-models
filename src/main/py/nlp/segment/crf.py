@@ -29,8 +29,6 @@ class CRFSegment(SegmentBase):
         )
         self.model.save(self.model_path)
 
-# 4/1wE6kmiGHbvpZB5oE84wAJqyekXNafi7gX55A9xBexwE2vayp8DIXF0
-
 
 if __name__ == '__main__':
 

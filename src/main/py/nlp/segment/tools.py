@@ -52,7 +52,7 @@ def evaluation(prophet, gold_path):
     # print(" time: " + (System.currentTimeMillis() - start))
 
 
-def evaluation_crf(gold_path):
+def evaluation_crf(gold_path, ):
     dataset = DataProcessor()
 
     model_path = 'seg-glove-bi-gru-crf-model-mask.h5'
@@ -69,6 +69,13 @@ def evaluation_lac(gold_path):
 
     def prophet(text):
         return lac.run(text)[0]
+
+    evaluation(prophet, gold_path)
+
+
+def evaluation_seg(crf_seg, gold_path):
+    def prophet(text):
+        return crf_seg.seg(text)
 
     evaluation(prophet, gold_path)
 

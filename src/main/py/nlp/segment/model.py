@@ -154,7 +154,7 @@ def build_glove_bi_gru2_crf_model(args, word_to_id_func):
     model.add(Dropout(DROPOUT_RATE))
     model.add(Bidirectional(GRU(256, return_sequences=True)))
     model.add(Dropout(DROPOUT_RATE))
-    model.add(TimeDistributed(Dense(num_labels, activation='softmax')))
+    # model.add(TimeDistributed(Dense(num_labels, activation='softmax')))
 
     crf_layer = build_crf_layer(num_labels)
     model.add(crf_layer)

@@ -1,7 +1,10 @@
 
 import operator
 
-from LAC import LAC
+try:
+    from LAC import LAC
+except ImportError:
+    pass
 
 from nlp.corpus.reader import DataProcessor
 from nlp.segment.crf import CRFSegment
@@ -42,8 +45,8 @@ def evaluation(prophet, gold_path):
             correct += 1
         else:
             print(i)
-            print(' '.join(result))
-            print(' '.join(gold))
+            # print(' '.join(result))
+            # print(' '.join(gold))
 
         l = list(set(result).intersection(set(gold)))
         a_and_b += len(l)
@@ -73,9 +76,9 @@ def evaluation_lac(gold_path):
     evaluation(prophet, gold_path)
 
 
-def evaluation_seg(crf_seg, gold_path):
+def evaluation_seg(segment, gold_path):
     def prophet(text):
-        return crf_seg.seg(text)
+        return segment.seg(text)
 
     evaluation(prophet, gold_path)
 

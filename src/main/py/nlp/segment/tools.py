@@ -1,5 +1,6 @@
 
 import operator
+from tqdm import tqdm
 
 try:
     from LAC import LAC
@@ -30,7 +31,9 @@ def evaluation(prophet, gold_path):
     a = 0
     b = 0
     a_and_b = 0
-    for i in range(0, size):
+
+    # for i in tqdm(range(10), total=10, desc="WSX", ncols=100, postfix=dict, mininterval=0.3):
+    for i in tqdm(range(0, size)):
         result = prophet(data_list[i])
         if result is None:
             continue
@@ -44,14 +47,20 @@ def evaluation(prophet, gold_path):
         if corr:
             correct += 1
         else:
-            print(i)
+            pass
+            # print(i)
             # print(' '.join(result))
             # print(' '.join(gold))
 
-        l = list(set(result).intersection(set(gold)))
-        a_and_b += len(l)
+        gold = set(gold)
+        for w in result:
+            if w in gold:
+                a_and_b += 1
 
-    print(" correct : %f  %f  P: %f  R: %f" % (correct, correct * 1.0 / size ,  a_and_b * 1.0 / b ,  a_and_b * 1.0 / a))
+        # l = list(set(result).intersection())
+        # a_and_b += len(l)
+
+    print(" correct : %f  %f  P: %f  R: %f" % (correct, correct * 1.0 / size,  a_and_b * 1.0 / b,  a_and_b * 1.0 / a))
     # print(" time: " + (System.currentTimeMillis() - start))
 
 
@@ -68,10 +77,21 @@ def evaluation_crf(gold_path, ):
 
 
 def evaluation_lac(gold_path):
-    lac = LAC()
+    # correct : 883.000000  0.221581  P: 0.751281  R: 0.722980
+    # correct : 2754.000000  0.691092  P: 0.813256  R: 0.812282
+
+    # correct :893   0.22409033877038895  P: 0.9046166697425039 R:0.8714198830409356
+    # correct :2754   0.6910915934755333  P: 0.9742943595604561 R:0.973127485380117
+
+    data_path = '/Users/xueyu/Workspace/data/'
+    model_path = 'nlp/model/lac/seg_model/'
+    model_path = data_path + model_path
+    # lac = LAC(model_path=model_path, mode='seg')
+
+    lac = LAC(mode='seg')
 
     def prophet(text):
-        return lac.run(text)[0]
+        return lac.run(text)
 
     evaluation(prophet, gold_path)
 
@@ -85,5 +105,6 @@ def evaluation_seg(segment, gold_path):
 
 if __name__ == '__main__':
     org = 'msr'
-    gold = "/Users/xueyu/Workspace/training data/icwb2-data/gold/" + org + "_test_gold.utf8";
-    evaluation_crf(gold)
+    data_path = '/Users/xueyu/Workspace/data'
+    gold = data_path + "/nlp/corpus/icwb2-data/gold/" + org + "_test_gold.utf8"
+    evaluation_lac(gold)

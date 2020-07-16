@@ -46,18 +46,38 @@ def build_glove_layer(embedding_glove_path, vocab_size, word_to_id_func):
                      )
 
 
-def build_embedding_layer(vocab_size, word_to_id_func):
+def build_embedding_layer(vocab_size):
     return Embedding(input_dim=vocab_size,
                      output_dim=EMBEDDING_OUT_DIM,
                      input_shape=(MAX_LENGTH,),
+                     # embeddings_initializer
+                     # trainable=True,
                      mask_zero=True
                      )
 
 
 def build_crf_layer(num_labels):
-    # from tf2crf import CRF
-    # crf = CRF()
     return CRF(num_labels, name='crf_layer')
+
+
+def build_lstm_layer():
+    return LSTM(200, return_sequences=True)
+
+
+def build_gru_layer():
+    return GRU(200, return_sequences=True)
+
+
+def build_bilstm_layer():
+    return Bidirectional(LSTM(200, return_sequences=True), merge_mode='ave')
+
+
+def build_bigru_layer():
+    return Bidirectional(GRU(256, return_sequences=True))
+
+
+def build_tdd_layer(num_labels):
+    return TimeDistributed(Dense(num_labels, activation='softmax'))
 
 
 def build_crf_model(vocab_size, num_labels):
@@ -65,7 +85,6 @@ def build_crf_model(vocab_size, num_labels):
 
     embedding_layer = build_embedding_layer(vocab_size)
     model.add(embedding_layer)
-    # model.add(Embedding(VOCAB_SIZE, output_dim=EMBEDDING_OUT_DIM, input_length=TIME_STAMPS))
     # model.add(Bidirectional(LSTM(HIDDEN_UNITS // 2, return_sequences=True)))
     # model.add(Dense(NUM_CLASS, activation='softmax'))
 
@@ -85,19 +104,10 @@ def build_glove_crf_model(vocab_size, num_labels, word_to_id_func):
 
     embedding_layer = build_glove_layer(vocab_size, word_to_id_func)
     model.add(embedding_layer)
-    # model.add(Embedding(VOCAB_SIZE, output_dim=EMBEDDING_OUT_DIM, input_length=TIME_STAMPS))
-    # model.add(Bidirectional(LSTM(HIDDEN_UNITS // 2, return_sequences=True)))
-    # model.add(Dense(NUM_CLASS, activation='softmax'))
-
-    # model.add(Bidirectional(LSTM(NUM_CLASS, return_sequences=True, activation="tanh"), merge_mode='sum'))
-    # model.add(Bidirectional(LSTM(NUM_CLASS, return_sequences=True, activation="softmax"), merge_mode='sum'))
 
     crf_layer = build_crf_layer(num_labels)
     model.add(crf_layer)
     model.compile('adam', loss=crf_loss, metrics=[crf_layer.get_accuracy])
-
-    # model.compile(loss=crf_layer.loss, optimizer='adam', metrics=[crf_layer.accuracy])
-
     return model
 
 

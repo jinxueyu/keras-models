@@ -1,6 +1,5 @@
-from LAC import LAC
-from LAC.ahocorasick import Ahocorasick
-from LAC.custom import Customization
+from nlp.lac import LAC
+from nlp.lac.custom import Customization
 
 
 def test():
@@ -34,13 +33,12 @@ def train():
     test_file = data_path + "nlp/corpus/icwb2-data/gold/" + org + "_test_gold.utf8"
     train_file = data_path + "nlp/corpus/icwb2-data/training/msr_training.utf8"
 
-    model_path = 'nlp/model'
-    model_path = data_path+model_path+'/lac/seg_model/'
+    model_path = 'nlp/model/'
 
     print(train_file)
 
-    lac = LAC(mode='seg')
-    lac.train(model_save_dir=model_path, train_data=train_file, test_data=test_file)
+    lac = LAC(model_path=data_path+model_path+'lac/seg_model')
+    lac.train(model_save_dir=data_path+model_path+'lac/msr_seg_model', train_data=train_file, test_data=test_file)
 
 
 def ac_postpress(ac_res):
@@ -56,17 +54,17 @@ def ac_postpress(ac_res):
 
 if __name__ == '__main__':
 
-    # train()
+    train()
     # [test]
     # P: 0.86056, R: 0.88362, F1: 0.87194
     # [test]
     # P: 0.96903, R: 0.96838, F1: 0.96870
     data_path = '/Users/xueyu/Workspace/data/'
-    model_path = 'nlp/model/lac/seg_model/'
-    model_path = data_path + model_path
+    model_path = 'nlp/model/'
+    model_path = data_path+model_path+'lac/msr_seg_model'
+    print(model_path)
 
-    # lac = LAC(model_path=model_path)
-    lac = LAC(mode='seg')
+    lac = LAC(model_path=model_path, mode='seg')
     text = [
         '我是中国人',
         '我爱北京天安门',

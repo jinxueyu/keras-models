@@ -60,6 +60,7 @@ def evaluation(prophet, gold_path):
         # l = list(set(result).intersection())
         # a_and_b += len(l)
 
+    print(" correct : %f  %f  a: %f  b: %f" % (correct, a_and_b, b, a))
     print(" correct : %f  %f  P: %f  R: %f" % (correct, correct * 1.0 / size,  a_and_b * 1.0 / b,  a_and_b * 1.0 / a))
     # print(" time: " + (System.currentTimeMillis() - start))
 
@@ -84,11 +85,12 @@ def evaluation_lac(gold_path):
     # correct :2754   0.6910915934755333  P: 0.9742943595604561 R:0.973127485380117
 
     data_path = '/Users/xueyu/Workspace/data/'
-    model_path = 'nlp/model/lac/seg_model/'
+    model_path = 'nlp/model/lac/msr_seg_model/'
     model_path = data_path + model_path
-    # lac = LAC(model_path=model_path, mode='seg')
+    print(model_path)
+    lac = LAC(model_path=model_path, mode='seg')
 
-    lac = LAC(mode='seg')
+    # lac = LAC(mode='seg')
 
     def prophet(text):
         return lac.run(text)

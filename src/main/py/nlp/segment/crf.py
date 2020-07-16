@@ -31,6 +31,7 @@ class CRFSegment(SegmentBase):
 
 
 if __name__ == '__main__':
+    # seg-glove-bi-gru2-td-crf-model-mask  correct : 1597.000000  0.400753  P: 0.849083  R: 0.820235
 
     config = configparser.ConfigParser()
     config.read(os.path.join('', "model-args-config.ini"))

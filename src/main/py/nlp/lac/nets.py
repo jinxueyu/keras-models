@@ -27,6 +27,8 @@ import paddle.fluid as fluid
 import paddle
 import multiprocessing
 
+from tqdm import tqdm
+
 from .reader import Dataset
 from . import utils
 
@@ -48,10 +50,8 @@ def lex_net(word, args, vocab_size, num_labels, target=None):
 
     word_emb_dim = args.word_emb_dim
     grnn_hidden_dim = args.grnn_hidden_dim
-    emb_lr = args.emb_learning_rate if 'emb_learning_rate' in dir(
-        args) else 1.0
-    crf_lr = args.emb_learning_rate if 'crf_learning_rate' in dir(
-        args) else 1.0
+    emb_lr = args.emb_learning_rate if 'emb_learning_rate' in dir(args) else 1.0
+    crf_lr = args.crf_learning_rate if 'crf_learning_rate' in dir(args) else 1.0
     bigru_num = args.bigru_num
     init_bound = 0.1
     IS_SPARSE = True
@@ -108,8 +108,7 @@ def lex_net(word, args, vocab_size, num_labels, target=None):
             param_attr=fluid.ParamAttr(
                 learning_rate=emb_lr,
                 name="word_emb",
-                initializer=fluid.initializer.Uniform(
-                    low=-init_bound, high=init_bound)))
+                initializer=fluid.initializer.Uniform(low=-init_bound, high=init_bound)))
 
         input_feature = word_embedding
         for i in range(bigru_num):
@@ -120,10 +119,10 @@ def lex_net(word, args, vocab_size, num_labels, target=None):
             size=num_labels,
             input=bigru_output,
             param_attr=fluid.ParamAttr(
-                initializer=fluid.initializer.Uniform(
-                    low=-init_bound, high=init_bound),
-                regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)))
+                initializer=fluid.initializer.Uniform(low=-init_bound, high=init_bound),
+                regularizer=fluid.regularizer.L2DecayRegularizer(regularization_coeff=1e-4)
+            )
+        )
 
         if target is not None:
             crf_cost = fluid.layers.linear_chain_crf(
@@ -323,7 +322,7 @@ def do_train(args):
     exe = fluid.Executor(place)
     exe.run(startup_program)
 
-    if args.init_checkpoint:
+    if args.pretraining:
         utils.init_pretraining_params(exe, args.init_checkpoint, train_program)
 
     test_process(exe, test_program, test_reader, train_ret)
@@ -342,7 +341,7 @@ def do_train(args):
 
     step = 0
     fetch_list = []
-    for epoch_id in range(args.epoch):
+    for epoch_id in tqdm(range(args.epoch)):
         for data in train_reader():
             outputs = exe.run(
                 compiled_prog,

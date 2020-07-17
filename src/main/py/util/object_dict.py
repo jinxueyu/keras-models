@@ -12,4 +12,15 @@ class ObjectDict(Dict[str, Any]):
             raise AttributeError(name)
 
     def __setattr__(self, name: str, value: Any) -> None:
+        # if type(value) is dict:
+        #     value = ObjectDict(value)
+        #
+        # print(name, value)
+        # if type(value) is list:
+        #     val_list = []
+        #     for val in value:
+        #         if type(val) is dict:
+        #             val = ObjectDict(val)
+        #         val_list.append(val)
+        #     value = val_list
         self[name] = value

@@ -35,6 +35,10 @@ def load_kv_dict(dict_path,
     return result_dict
 
 
+def _get_abs_path(path):
+    return os.path.normpath(os.path.join(os.getcwd(), os.path.dirname(__file__), path))
+
+
 class Dataset(object):
     """data reader"""
 
@@ -164,10 +168,6 @@ class Dataset(object):
         return wrapper
 
 
-def _get_abs_path(path): return os.path.normpath(
-    os.path.join(os.getcwd(), os.path.dirname(__file__), path))
-
-
 class DataProcessor(Dataset):
     def __init__(self, data_type='seg'):
         conf_path = _get_abs_path(data_type + '_model/conf/')
@@ -181,13 +181,17 @@ class DataProcessor(Dataset):
         Dataset.__init__(self, ObjectDict(args), dev_count=10)
 
     def process_input_data(self, data_path, maxlen=256, padding='post'):
-        data_generator = self.file_reader(data_path)
-
         train_x = []
         train_y = []
+
+        count = 0
+        data_generator = self.file_reader(data_path)
         for word_ids, label_ids in data_generator():
             train_x.append(word_ids)
             train_y.append(label_ids)
+            count += 1
+            if count > 10000:
+                break
 
         train_x = self.pad_sequences(np.asarray(train_x), maxlen=maxlen, padding=padding)
         train_y = self.pad_sequences(np.asarray(train_y), maxlen=maxlen, padding=padding, value=0)
@@ -200,6 +204,48 @@ class DataProcessor(Dataset):
     def text_to_ids(self, text,  maxlen=256, padding='post', value=0.):
         seq = [self.word_to_id(w) for w in text]
         return self.pad_sequences(np.asarray([seq]), maxlen=maxlen, padding=padding, value=value)
+
+
+class EmbeddingVectors(object):
+    def __init__(self, data_set, vec_path, vec_type='glove'):
+        self.embedding_weights = None
+        self.vocab_length = data_set.vocab_size
+        self.vector_length = 0
+
+        # 在下面加载学习的分布式表达式
+        # 这使您可以考虑来自大型语料库的单词语义信息, 而不是训练数据
+        # 0th分配给填充, (词汇+ 1)分配给未知单词
+        # glove = np.concatenate([np.zeros(EMBEDDING_OUT_DIM)[np.newaxis],
+        #                         np.load('../glove-wiki-300-connl.npy'),
+        #                         np.zeros(EMBEDDING_OUT_DIM)[np.newaxis]],
+        #                        axis=0)
+        reader = open(vec_path, 'r')
+        while True:
+            line = reader.readline()
+            if not line:
+                break
+            arr = line.rstrip().split(' ')
+            word = arr[0]
+            if len(word) > 1:
+                continue
+
+            if self.embedding_weights is None:
+                self.vector_length = len(arr) - 1
+                self.embedding_weights = np.zeros((self.vocab_length, self.vector_length))
+            self.embedding_weights[data_set.word_to_id(word), :] = np.array(arr[1:], dtype='float32')
+        reader.close()
+
+    @property
+    def weights(self):
+        return self.embedding_weights
+
+    @property
+    def vocab_size(self):
+        return self.vocab_length
+
+    @property
+    def vector_size(self):
+        return self.vector_length
 
 
 if __name__ == "__main__":

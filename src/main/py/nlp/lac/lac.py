@@ -47,17 +47,24 @@ DEFAULT_SEG = _get_abs_path('seg_model')
 class LAC(object):
     """docstring for LAC"""
 
-    def __init__(self, model_path=None, mode='lac', use_cuda=False):
+    def __init__(self, model_path=None, mode='lac', pretraining=True, use_cuda=False):
         super(LAC, self).__init__()
         utils.check_cuda(use_cuda)
         if model_path is None:
             model_path = DEFAULT_SEG if mode == 'seg' else DEFAULT_LAC
 
+        self.model_path = model_path
+
+        # 超参数
         self.args = utils.DefaultArgs(model_path)
         self.args.use_cuda = use_cuda
-        self.model_path = model_path
-        config = AnalysisConfig(self.args.init_checkpoint)
-        config.disable_glog_info()
+
+        self.args.pretraining = pretraining
+
+        config = None
+        if self.args.init_checkpoint and os.path.isfile(os.path.join(self.args.init_checkpoint, '__model__')):
+            config = AnalysisConfig(self.args.init_checkpoint)
+            config.disable_glog_info()
 
         if use_cuda:
             self.place = fluid.CUDAPlace(
@@ -69,16 +76,17 @@ class LAC(object):
         else:
             self.place = fluid.CPUPlace()
 
+        if config is not None:
+            self.predictor = create_paddle_predictor(config)
+
+        self.return_tag = mode != 'seg'
+
         # init executor
         self.exe = fluid.Executor(self.place)
-
         self.dataset = reader.Dataset(self.args)
-
-        self.predictor = create_paddle_predictor(config)
 
         self.custom = None
         self.batch = False
-        self.return_tag = mode != 'seg'
 
     def run(self, texts):
         """执行模型预测过程

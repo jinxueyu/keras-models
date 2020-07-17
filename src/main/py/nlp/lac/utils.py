@@ -94,6 +94,8 @@ class DefaultArgs(object):
         self.word_rep_dict_path = os.path.join(
             model_path, config.get("DICT_FILE", "word_rep_dict_path"))
 
+        self.pretraining = True
+
 
 def print_arguments(args):
     """none"""

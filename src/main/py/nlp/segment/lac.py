@@ -37,7 +37,7 @@ def train():
 
     print(train_file)
 
-    lac = LAC(model_path=data_path+model_path+'lac/seg_model')
+    lac = LAC(model_path=data_path+model_path+'lac/seg_model', mode='seg', pretraining=False)
     lac.train(model_save_dir=data_path+model_path+'lac/msr_seg_model', train_data=train_file, test_data=test_file)
 
 
@@ -59,6 +59,8 @@ if __name__ == '__main__':
     # P: 0.86056, R: 0.88362, F1: 0.87194
     # [test]
     # P: 0.96903, R: 0.96838, F1: 0.96870
+    # correct : 1378.000000  0.345797  P: 0.921734  R: 0.918146
+
     data_path = '/Users/xueyu/Workspace/data/'
     model_path = 'nlp/model/'
     model_path = data_path+model_path+'lac/msr_seg_model'

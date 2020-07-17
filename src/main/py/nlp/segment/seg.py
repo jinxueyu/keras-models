@@ -1,4 +1,3 @@
-from nlp.segment.model import MAX_LENGTH
 
 
 def wrap(text, label, index_word):
@@ -24,13 +23,13 @@ class SegmentBase(object):
     def __init__(self, model, dataset):
         self.__model = model  # load_model(model_path, custom_objects=custom_objects)
         self.dataset = dataset
+        self.seq_max_len = self.__model.get_layer(index=0).input_length
 
     def set_model(self, model):
         self.__model = model
 
     def seg(self, text):
-        # seq = [self.__dataset.word_to_id(w) for w in text]
-        data = self.dataset.text_to_ids(text, maxlen=MAX_LENGTH, padding='post')
+        data = self.dataset.text_to_ids(text, maxlen=self.seq_max_len, padding='post')
         label = self.__model.predict(data)
         return self.wrap(text, label[0])
 

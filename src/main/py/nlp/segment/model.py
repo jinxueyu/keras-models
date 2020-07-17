@@ -6,78 +6,64 @@ from tensorflow.python.keras.layers import Dropout
 
 from addons.layers.crf import CRF
 from addons.losses.crf import crf_loss
+from nlp.corpus.reader import EmbeddingVectors, DataProcessor
+from util import ObjectDict
 
 
-NUM_CLASS = 5
-MAX_LENGTH = 100
-EMBEDDING_OUT_DIM = 200
-HIDDEN_UNITS = 200
-DROPOUT_RATE = 0.3
+def build_dense_layer(args):
+    return Dense(args.input_shape, activation='softmax')
 
 
-def build_glove_layer(embedding_glove_path, vocab_size, word_to_id_func):
-    # 在下面加载学习的分布式表达式
-    # 这使您可以考虑来自大型语料库的单词语义信息, 而不是训练数据
-    # 0th分配给填充, (词汇+ 1)分配给未知单词
-    # glove = np.concatenate([np.zeros(EMBEDDING_OUT_DIM)[np.newaxis],
-    #                         np.load('../glove-wiki-300-connl.npy'),
-    #                         np.zeros(EMBEDDING_OUT_DIM)[np.newaxis]],
-    #                        axis=0)
-    embedding_weights = np.zeros((vocab_size, EMBEDDING_OUT_DIM))
-    reader = open(embedding_glove_path, 'r')
-    while True:
-        line = reader.readline()
-        if not line:
-            break
-        arr = line.rstrip().split(' ')
-        word = arr[0]
-        if len(word) > 1:
-            continue
-        embedding_weights[word_to_id_func(word), :] = np.array(arr[1:], dtype='float32')
-    reader.close()
+def build_glove_layer(args, dataset):
+    vec_path = args.vec_path
+    input_length = args.input_length
+    embedding_vector = EmbeddingVectors(dataset, vec_path, 'glove')
 
-    return Embedding(input_dim=vocab_size,
-                     output_dim=EMBEDDING_OUT_DIM,
+    return Embedding(input_dim=embedding_vector.vocab_size,
+                     output_dim=embedding_vector.vector_size,
                      # embeddings_initializer=tf.keras.initializers.Constant(glove),
-                     weights=[embedding_weights],
-                     input_shape=(MAX_LENGTH,),
-                     trainable=True,
-                     mask_zero=True
+                     weights=[embedding_vector.weights],
+                     input_length=input_length,
+                     trainable=args.trainable,
+                     mask_zero=args.mask
                      )
 
 
-def build_embedding_layer(vocab_size):
-    return Embedding(input_dim=vocab_size,
-                     output_dim=EMBEDDING_OUT_DIM,
-                     input_shape=(MAX_LENGTH,),
+def build_embedding_layer(args):
+
+    return Embedding(input_dim=args.vocab_size,
+                     output_dim=args.output_dim,
+                     input_shape=args.input_shape,
                      # embeddings_initializer
                      # trainable=True,
                      mask_zero=True
                      )
 
 
-def build_crf_layer(num_labels):
-    return CRF(num_labels, name='crf_layer')
+def build_crf_layer(args):
+    return CRF(args.output_dim, name='crf_layer')
 
 
-def build_lstm_layer():
-    return LSTM(200, return_sequences=True)
+def build_lstm_layer(args):
+    return LSTM(args.hidden_size, return_sequences=True)
 
 
-def build_gru_layer():
-    return GRU(200, return_sequences=True)
+def build_gru_layer(args):
+    return GRU(args.hidden_size, return_sequences=True)
 
 
-def build_bilstm_layer():
-    return Bidirectional(LSTM(200, return_sequences=True), merge_mode='ave')
+def build_bilstm_layer(args):
+    return Bidirectional(LSTM(args.hidden_size, return_sequences=True), merge_mode='ave')
 
 
-def build_bigru_layer():
-    return Bidirectional(GRU(256, return_sequences=True))
+def build_bigru_layer(args):
+    # dropout ，应用于输入的第一个操作
+    # recurrent_dropout ，应用于循环输入的其他操作（先前的输出和 / 或状态）
+    return Bidirectional(GRU(args.hidden_size, return_sequences=True))
 
 
-def build_tdd_layer(num_labels):
-    return TimeDistributed(Dense(num_labels, activation='softmax'))
+def build_tdd_layer(args):
+    return TimeDistributed(Dense(args.num_labels, activation='softmax'))
 
 
 def build_crf_model(vocab_size, num_labels):
@@ -151,25 +137,62 @@ def build_glove_bi_gru_crf_model(vocab_size, num_labels, word_to_id_func):
     return model
 
 
-def build_glove_bi_gru2_crf_model(args, word_to_id_func):
+def build_dropout_layer(args):
+    return Dropout(args.dropout_rate)
+
+
+def build_glove_bi_gru2_crf_model(args, dataset):
+    DROPOUT_RATE = 0.3
     vocab_size = args.vocab_size
     num_labels = args.num_labels
     embedding_glove_path = args.glove_path
 
     model = Sequential()
-    embedding_layer = build_glove_layer(embedding_glove_path, vocab_size, word_to_id_func)
+    embedding_layer = build_glove_layer(args, dataset)
     model.add(embedding_layer)
 
     model.add(Bidirectional(GRU(256, return_sequences=True)))
-    model.add(Dropout(DROPOUT_RATE))
+    model.add()
     model.add(Bidirectional(GRU(256, return_sequences=True)))
     model.add(Dropout(DROPOUT_RATE))
     # model.add(TimeDistributed(Dense(num_labels, activation='softmax')))
     model.add(Dense(num_labels, activation='softmax'))
 
-    crf_layer = build_crf_layer(num_labels)
+    crf_layer = build_crf_layer(args)
     model.add(crf_layer)
+
     model.compile('adam', loss=crf_loss, metrics=[crf_layer.get_accuracy])
 
     # tf.keras.utils.plot_model(model, show_shapes=True, dpi=64)
     return model
+
+
+def build_laysers():
+    layers = {
+        'glove':   build_glove_layer,
+        'bigru':   build_bigru_layer,
+        'dense':   build_dense_layer,
+        'dropout': build_dropout_layer,
+        'crf':     build_crf_layer
+    }
+
+    return layers
+
+
+def build_model(args, dataset):
+    layer_dict = build_laysers()
+    model = Sequential()
+    for layer_args in args.layers:
+        build_layer_func = layer_dict[layer_args.name]
+        print('build layer:'+layer_args.name)
+        if layer_args.name is 'glove':
+            model_layer = build_layer_func(layer_args, dataset)
+        else:
+            model_layer = build_layer_func(layer_args)
+        model.add(model_layer)
+
+    model.compile(optimizer=args.optimizer, loss=args.loss, metrics=args.metrics)
+
+    return model
+
+

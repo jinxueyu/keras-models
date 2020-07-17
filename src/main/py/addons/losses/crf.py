@@ -17,7 +17,7 @@
 from __future__ import absolute_import, division, print_function
 
 import tensorflow as tf
-from tensorflow import is_tensor
+from tensorflow import is_tensor, Tensor, float32
 from tensorflow.keras import backend as K
 
 from addons.layers.crf import CRF
@@ -26,7 +26,7 @@ from addons.layers.crf import CRF
 # @tf.keras.utils.register_keras_serializable(package="Addons")
 class ConditionalRandomFieldLoss(object):
     def __init__(self, name: str = "crf_loss"):
-        # self.name = name
+        self.name = name
         self.__name__ = name
 
     def get_config(self):
@@ -72,14 +72,16 @@ class ConditionalRandomFieldLoss(object):
 
 
 def crf_loss(y_true, y_pred):
-        crf_layer = y_pred._keras_history[0]
+    crf_layer = y_pred._keras_history[0]
 
-        # check if last layer is CRF
-        if not isinstance(crf_layer, CRF):
-            raise ValueError(
-                "Last layer must be CRF for use {}.".format('crf_loss')
-            )
+    # check if last layer is CRF
+    if not isinstance(crf_layer, CRF):
+        raise ValueError(
+            "Last layer must be CRF for use {}.".format('crf_loss')
+        )
 
-        loss_vector = crf_layer.get_loss(y_true, y_pred)
+    loss_vector = crf_layer.get_loss(y_true, y_pred)
 
-        return tf.keras.backend.mean(loss_vector)
+    return tf.keras.backend.mean(loss_vector)
+
+# crf_loss = ConditionalRandomFieldLoss()

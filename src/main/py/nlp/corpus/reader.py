@@ -1,4 +1,3 @@
-
 import argparse
 import logging
 import __future__
@@ -128,6 +127,7 @@ class Dataset(object):
         yield (word_idx, target_idx) one by one from file,
             or yield (word_idx, ) in `infer` mode
         """
+
         def wrapper():
             """the wrapper of data generator"""
             fread = io.open(filename, "r", encoding="utf-8")
@@ -180,7 +180,7 @@ class DataProcessor(Dataset):
         }
         Dataset.__init__(self, ObjectDict(args), dev_count=10)
 
-    def process_input_data(self, data_path, maxlen=256, padding='post'):
+    def process_input_data(self, data_path, maxlen=256, padding='post', data_size=-1):
         train_x = []
         train_y = []
 
@@ -190,7 +190,8 @@ class DataProcessor(Dataset):
             train_x.append(word_ids)
             train_y.append(label_ids)
             count += 1
-            if count > 10000:
+
+            if 0 < data_size < count:
                 break
 
         train_x = self.pad_sequences(np.asarray(train_x), maxlen=maxlen, padding=padding)
@@ -201,7 +202,7 @@ class DataProcessor(Dataset):
     def pad_sequences(self, seq, maxlen=256, padding='post', value=0.):
         return preprocessing.sequence.pad_sequences(np.asarray(seq), maxlen=maxlen, padding=padding, value=value)
 
-    def text_to_ids(self, text,  maxlen=256, padding='post', value=0.):
+    def text_to_ids(self, text, maxlen=256, padding='post', value=0.):
         seq = [self.word_to_id(w) for w in text]
         return self.pad_sequences(np.asarray([seq]), maxlen=maxlen, padding=padding, value=value)
 
@@ -274,5 +275,3 @@ if __name__ == "__main__":
     dp = DataProcessor()
     x, y = dp.process_input_data("data/msr_training.utf8")
     print(x[0], y[0])
-
-

@@ -60,9 +60,13 @@ def evaluation(prophet, gold_path):
         # l = list(set(result).intersection())
         # a_and_b += len(l)
 
+    r = a_and_b * 1.0 / a
+    p = a_and_b * 1.0 / b
+    f1 = 2 * p * r / (p + r)
     print(" correct : %f  %f  a: %f  b: %f" % (correct, a_and_b, b, a))
-    print(" correct : %f  %f  P: %f  R: %f" % (correct, correct * 1.0 / size,  a_and_b * 1.0 / b,  a_and_b * 1.0 / a))
-    # print(" time: " + (System.currentTimeMillis() - start))
+    print(" correct : %f  %f  P: %f  R: %f F1: %f" % (correct, correct * 1.0 / size, p, r, f1))
+
+    return r, p, f1
 
 
 def evaluation_crf(gold_path, ):
@@ -74,7 +78,7 @@ def evaluation_crf(gold_path, ):
     def prophet(text):
         return crf_seg.seg(text)
 
-    evaluation(prophet, gold_path)
+    return evaluation(prophet, gold_path)
 
 
 def evaluation_lac(gold_path):
@@ -95,14 +99,14 @@ def evaluation_lac(gold_path):
     def prophet(text):
         return lac.run(text)
 
-    evaluation(prophet, gold_path)
+    return evaluation(prophet, gold_path)
 
 
 def evaluation_seg(segment, gold_path):
     def prophet(text):
         return segment.seg(text)
 
-    evaluation(prophet, gold_path)
+    return evaluation(prophet, gold_path)
 
 
 if __name__ == '__main__':

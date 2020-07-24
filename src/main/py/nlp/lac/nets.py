@@ -64,17 +64,27 @@ def lex_net(word, args, vocab_size, num_labels, target=None):
             size=grnn_hidden_dim * 3,
             param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
-                    low=-init_bound, high=init_bound),
+                    low=-init_bound,
+                    high=init_bound
+                ),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)))
+                    regularization_coeff=1e-4
+                )
+            )
+        )
         gru = fluid.layers.dynamic_gru(
             input=pre_gru,
             size=grnn_hidden_dim,
             param_attr=fluid.ParamAttr(
                 initializer=fluid.initializer.Uniform(
-                    low=-init_bound, high=init_bound),
+                    low=-init_bound,
+                    high=init_bound
+                ),
                 regularizer=fluid.regularizer.L2DecayRegularizer(
-                    regularization_coeff=1e-4)))
+                    regularization_coeff=1e-4
+                )
+            )
+        )
 
         pre_gru_r = fluid.layers.fc(
             input=input_feature,

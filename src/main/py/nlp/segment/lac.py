@@ -54,7 +54,7 @@ def ac_postpress(ac_res):
 
 if __name__ == '__main__':
 
-    train()
+    # train()
     # [test]
     # P: 0.86056, R: 0.88362, F1: 0.87194
     # [test]

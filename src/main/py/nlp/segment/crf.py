@@ -23,7 +23,7 @@ class CRFSegment(SegmentBase):
 
     def train(self, data_path):
         print(self.model.summary())
-        tf.keras.utils.plot_model(model, to_file=self.model_path+'_model.png', show_shapes=True, dpi=64)
+        tf.keras.utils.plot_model(self.model, to_file=self.model_path+'_model.png', show_shapes=True, dpi=64)
         train_x, train_y = self.dataset.process_input_data(data_path, maxlen=self.seq_max_len)
         history = self.model.fit(
             train_x, train_y,

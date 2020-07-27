@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 
 
 def build_kernel_initializer(args):
+    if args is None:
+        return None
     kernel_initializer = None
     if args.name == 'RandomUniform':
         kernel_initializer = initializers.RandomUniform(args.minval, args.maxval)
@@ -23,7 +25,8 @@ def build_kernel_initializer(args):
 
 
 def build_kernel_regularizer(args):
-    print(args)
+    if args is None:
+        return None
     kernel_regularizer = None
     if args.name == 'l1':
        kernel_regularizer = regularizers.l1(l=args.l)
@@ -80,8 +83,8 @@ def build_dense_layer(args):
         units=args.units,
         # input_shape=args.input_shape if hasattr(args, 'input_shape') else None,
         activation=args.activation if hasattr(args, 'activation') else None,  # 'softmax',
-        kernel_initializer=build_kernel_initializer(args.kernel_initializer),  # 'glorot_uniform',
-        kernel_regularizer=build_kernel_regularizer(args.kernel_regularizer)
+        kernel_initializer=build_kernel_initializer(args.kernel_initializer if hasattr(args, 'kernel_initializer') else None),  # 'glorot_uniform',
+        kernel_regularizer=build_kernel_regularizer(args.kernel_regularizer if hasattr(args, 'kernel_regularizer') else None)
     )
 
 

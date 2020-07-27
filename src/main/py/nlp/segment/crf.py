@@ -2,10 +2,10 @@ import configparser
 import os
 
 from nlp.corpus.reader import DataProcessor
-from nlp.segment import tools
 from nlp.segment.model import build_model, save_train_result
 from nlp.segment.seg import SegmentBase
-from util import ObjectDict
+from nlp.segment.utils import evaluation_seg
+from util.object_dict import build_object_dict
 
 
 class CRFSegment(SegmentBase):
@@ -132,23 +132,6 @@ def get_args(config):
     return args
 
 
-def build_object_dict(dict_value):
-    for name, value in dict_value.items():
-        if type(value) is dict:
-            value = ObjectDict(value)
-        if type(value) is list:
-            val_list = []
-            for val in value:
-                if type(val) is dict:
-                    val = build_object_dict(val)
-                val_list.append(val)
-            value = val_list
-
-        dict_value[name] = value
-
-    return ObjectDict(dict_value)
-
-
 def train(args, dataset):
     args.mode = 'seg-train'
 
@@ -166,11 +149,10 @@ def evaluation(args, dataset):
 
     args.vocab_size = dataset.vocab_size
     args.num_labels = dataset.num_labels
+    gold = os.path.join(args.data_path, "nlp/corpus/icwb2-data/gold/msr_test_gold.utf8")
 
     seg = CRFSegment(args, dataset)
-
-    gold = os.path.join(args.data_path, "nlp/corpus/icwb2-data/gold/msr_test_gold.utf8")
-    tools.evaluation_seg(seg, gold)
+    evaluation_seg(seg, gold)
 
 
 if __name__ == '__main__':

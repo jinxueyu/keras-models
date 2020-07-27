@@ -1,6 +1,4 @@
-
-import operator
-from tqdm import tqdm
+from nlp.segment.utils import evaluation
 
 try:
     from LAC import LAC
@@ -9,64 +7,6 @@ except ImportError:
 
 from nlp.corpus.reader import DataProcessor
 from nlp.segment.crf import CRFSegment
-
-
-def evaluation(prophet, gold_path):
-    data_list = []
-    gold_list = []
-
-    reader = open(gold_path, 'r')
-    while True:
-        line = reader.readline()
-        if not line:
-            break
-        line = line.rstrip()
-        data_list.append(line.replace('  ', ''))
-        gold_list.append(line)
-
-    reader.close()
-
-    correct = 0
-    size = len(data_list)
-    a = 0
-    b = 0
-    a_and_b = 0
-
-    # for i in tqdm(range(10), total=10, desc="WSX", ncols=100, postfix=dict, mininterval=0.3):
-    for i in tqdm(range(0, size)):
-        result = prophet(data_list[i])
-        if result is None:
-            continue
-        b += len(result)
-
-        gold_str = gold_list[i]
-        gold = gold_str.split("  ")
-        a += len(gold)
-
-        corr = operator.eq(gold, result)
-        if corr:
-            correct += 1
-        else:
-            pass
-            # print(i)
-            # print(' '.join(result))
-            # print(' '.join(gold))
-
-        gold = set(gold)
-        for w in result:
-            if w in gold:
-                a_and_b += 1
-
-        # l = list(set(result).intersection())
-        # a_and_b += len(l)
-
-    r = a_and_b * 1.0 / a
-    p = a_and_b * 1.0 / b
-    f1 = 2 * p * r / (p + r)
-    print(" correct : %f  %f  a: %f  b: %f" % (correct, a_and_b, b, a))
-    print(" correct : %f  %f  P: %f  R: %f F1: %f" % (correct, correct * 1.0 / size, p, r, f1))
-
-    return r, p, f1
 
 
 def evaluation_crf(gold_path, ):
@@ -98,13 +38,6 @@ def evaluation_lac(gold_path):
 
     def prophet(text):
         return lac.run(text)
-
-    return evaluation(prophet, gold_path)
-
-
-def evaluation_seg(segment, gold_path):
-    def prophet(text):
-        return segment.seg(text)
 
     return evaluation(prophet, gold_path)
 

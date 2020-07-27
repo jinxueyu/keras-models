@@ -1,9 +1,8 @@
 import configparser
 import os
 
-from addons.losses.crf import crf_loss
-from addons.metrics.crf import crf_acc_mask
 from nlp.corpus.reader import DataProcessor
+from nlp.segment import tools
 from nlp.segment.model import build_model, save_train_result
 from nlp.segment.seg import SegmentBase
 from util import ObjectDict
@@ -31,26 +30,44 @@ class CRFSegment(SegmentBase):
             validation_split=self.args.validation_split
         )
         self.model.save(self.model_path)
-        save_train_result(history, 'loss', 'crf_acc', args.model_path)
         return history
 
 
-def get_args():
-    data_path = '/Users/xueyu/Workspace/data/'
-    glove_path = data_path+'nlp/embidding/glove/tencent/Tencent_AILab_ChineseEmbedding_Single.txt'
+def get_config():
+    config = configparser.ConfigParser()
+    config.read(os.path.join('', "model-args-config.ini"))
+
+    data_path = '/Users/xueyu/Workspace/data'
+    model_path = 'nlp/model/keras-models'
+    corpus_path = 'nlp/corpus/icwb2-data/training/msr_training.utf8'
+    glove_path = 'nlp/embidding/glove/tencent/Tencent_AILab_ChineseEmbedding_Single.txt'
+
+    config_dict = {
+        'data_path':    data_path,
+        'model_path':   model_path,
+        'corpus_path':  corpus_path,
+        'glove_path':   glove_path
+    }
+
+    return build_object_dict(config_dict)
+
+
+def get_args(config):
+    model_name = 'seg-glove-bi-gru2-crf-model-mask'
+    glove_path = os.path.join(config.data_path, config.glove_path)
 
     mask = True
     args_dict = {
-        'model_name': 'seg-glove-bi-gru2-crf-model-mask',
+        'model_name': model_name,
         'mask': True,
         'optimizer': {
             'name': 'adam',
-            'learning_rate': 0.001
+            'learning_rate': 0.001  # 0.0005
         },
         'loss': {'name': 'crf_loss'},
         'metrics': [{'name': 'crf_acc_mask'}],
         'batch_size': 512,
-        'epochs': 20,
+        'epochs': 15,
         'validation_split': 0.1,
         'layers': [
             {
@@ -60,6 +77,11 @@ def get_args():
                 'mask': True,
                 'trainable': True
             },
+            # {
+            #     'name': 'embedding',
+            #     'vocab_size': vocab_size,
+            #     '': 96  # 128
+            # },
             {
                 'name': 'dense',
                 'units': 96,
@@ -101,7 +123,13 @@ def get_args():
         ]
     }
 
-    return build_object_dict(args_dict)
+    args = build_object_dict(args_dict)
+
+    args.data_path = config.data_path
+    args.model_path = os.path.join(config.data_path, config.model_path, model_name + '.h5')
+    args.train_data_path = os.path.join(config.data_path, config.corpus_path)
+
+    return args
 
 
 def build_object_dict(dict_value):
@@ -121,40 +149,43 @@ def build_object_dict(dict_value):
     return ObjectDict(dict_value)
 
 
-if __name__ == '__main__':
-    # seg-glove-bi-gru2-td-crf-model-mask  correct : 1597.000000  0.400753  P: 0.849083  R: 0.820235
-    config = configparser.ConfigParser()
-    config.read(os.path.join('', "model-args-config.ini"))
+def train(args, dataset):
+    args.mode = 'seg-train'
 
-    data_path = '/Users/xueyu/Workspace/data'
-    model_path = 'nlp/model/keras-models'
-    corpus_path = 'nlp/corpus/icwb2-data/training/msr_training.utf8'
-    glove_path = 'nlp/embidding/glove/tencent/Tencent_AILab_ChineseEmbedding_Single.txt'
-
-    mode = 'ner'
-    mode = 'ner-train'
-    mode = 'seg'
-    mode = 'seg-train'
-
-    args = get_args()
-    args.mode = mode
-
-    model_name = args.model_name
-
-    dataset = DataProcessor()
     args.vocab_size = dataset.vocab_size
     args.num_labels = dataset.num_labels
 
-    args.model_path = os.path.join(data_path, model_path, model_name + '.h5')
-    args.glove_path = os.path.join(data_path, glove_path)
+    seg = CRFSegment(args, dataset)
+    history = seg.train(args.train_data_path)
+
+    save_train_result(history, 'loss', 'crf_acc', args.model_path)
+
+
+def evaluation(args, dataset):
+    args.mode = 'seg'
+
+    args.vocab_size = dataset.vocab_size
+    args.num_labels = dataset.num_labels
+
+    seg = CRFSegment(args, dataset)
+
+    gold = os.path.join(args.data_path, "nlp/corpus/icwb2-data/gold/msr_test_gold.utf8")
+    tools.evaluation_seg(seg, gold)
+
+
+if __name__ == '__main__':
+    # seg-glove-bi-gru2-td-crf-model-mask  correct : 1597.000000  0.400753  P: 0.849083  R: 0.820235
+
+    config = get_config()
+    args = get_args(config)
+
+    dataset = DataProcessor()
+
+    train(args, dataset)
 
     # model = build_model(args, dataset)
     # print(model.summary())
     # tf.keras.utils.plot_model(model, to_file='crf_model_1.png', show_shapes=True, dpi=64)
-
-    crf_seg = CRFSegment(args, dataset)
-    data_path = os.path.join(data_path, corpus_path)
-    crf_seg.train(data_path)
 
     text_list = ['我是中国人',
                  '我爱北京天安门',
@@ -165,8 +196,13 @@ if __name__ == '__main__':
                  '为了有效地解决“高产穷县”的矛盾，吉林省委、省政府深入实际，调查研究，确定了实施“三大一强”的农业发展战略，即经过的努力，'
                  '粮食产量要再上两个台阶，畜牧业要成为农民增收的支柱产业，农副产品加工业要成为全省工业和财政收入的一大支柱，真正成为粮食"'
                  ]
-    for text in text_list:
-        print(crf_seg.seg(text))
+
+    # args.mode = 'seg'
+    # crf_seg = CRFSegment(args, dataset)
+    # for text in text_list:
+    #     print(crf_seg.seg(text))
+
+    evaluation(args, dataset)
 
 
 

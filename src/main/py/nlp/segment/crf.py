@@ -1,6 +1,6 @@
 import configparser
 import os
-
+import tensorflow as tf
 from nlp.corpus.reader import DataProcessor
 from nlp.segment.model import build_model, save_train_result
 from nlp.segment.seg import SegmentBase
@@ -22,6 +22,8 @@ class CRFSegment(SegmentBase):
         self.dataset = dataset
 
     def train(self, data_path):
+        print(self.model.summary())
+        tf.keras.utils.plot_model(model, to_file=self.model_path+'_model.png', show_shapes=True, dpi=64)
         train_x, train_y = self.dataset.process_input_data(data_path, maxlen=self.seq_max_len)
         history = self.model.fit(
             train_x, train_y,
@@ -160,7 +162,6 @@ if __name__ == '__main__':
 
     config = get_config()
     args = get_args(config)
-
     dataset = DataProcessor()
 
     train(args, dataset)
@@ -184,7 +185,7 @@ if __name__ == '__main__':
     # for text in text_list:
     #     print(crf_seg.seg(text))
 
-    evaluation(args, dataset)
+    # evaluation(args, dataset)
 
 
 

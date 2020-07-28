@@ -92,14 +92,15 @@ def build_glove_layer(args, dataset):
     vec_path = args.vec_path
     input_length = args.input_length
     embedding_vector = EmbeddingVectors(dataset, vec_path, 'glove')
-    return Embedding(input_dim=embedding_vector.vocab_size,
-                     output_dim=embedding_vector.vector_size,
-                     # embeddings_initializer=tf.keras.initializers.Constant(glove),
-                     weights=[embedding_vector.weights],
-                     input_length=input_length,
-                     trainable=args.trainable,
-                     mask_zero=args.mask
-                     )
+    return Embedding(
+        input_dim=embedding_vector.vocab_size,
+        output_dim=embedding_vector.vector_size,
+        weights=[embedding_vector.weights],
+        input_length=input_length,
+        # embeddings_initializer=tf.keras.initializers.Constant(glove),
+        trainable=args.trainable,
+        mask_zero=args.mask
+    )
 
 
 def build_embedding_layer(args):
@@ -116,7 +117,7 @@ def build_embedding_layer(args):
         input_dim=args.input_dim,
         output_dim=args.output_dim,
         input_length=args.input_length,
-        # embeddings_initializer
+        embeddings_initializer=build_kernel_initializer(args.embeddings_initializer),
         trainable=args.trainable,
         mask_zero=args.mask
     )

@@ -175,12 +175,12 @@ def build_bigru_layer(args):
     # reset_after = True,
 
     return Bidirectional(
-        merge_mode='concat',
+        merge_mode=args.merge_mode,  # 'concat',
         layer=GRU(
             args.units,
-            return_sequences=True,
-            kernel_initializer=initializers.RandomUniform(minval=-0.1, maxval=0.1),
-            kernel_regularizer=regularizers.l2(l=1e-4)
+            return_sequences=args.return_sequences,
+            kernel_initializer=build_kernel_initializer(args.kernel_initializer if hasattr(args, 'kernel_initializer') else None),  # 'glorot_uniform',
+            kernel_regularizer=build_kernel_regularizer(args.kernel_regularizer if hasattr(args, 'kernel_regularizer') else None)
         )
     )
 

@@ -85,7 +85,40 @@ def get_args(config, vocab_size=0):
                 'output_dim': 96,
                 'input_length': 100,  # < 128
                 'trainable': True,
-                'mask': True
+                'mask': True,
+                'embeddings_initializer': {
+                    'name': 'RandomUniform',
+                    'minval': -0.1,
+                    'maxval': 0.1
+                }
+            },
+            {
+                'name': 'dense',
+                'units': 96,
+                'return_sequences': True,
+                'merge_mode': 'concat',
+                'kernel_initializer': {
+                    'name': 'RandomUniform',
+                    'minval': -0.1,
+                    'maxval': 0.1
+                },
+                'kernel_regularizer': {
+                    'name': 'l2',
+                    'l': 1e-4
+                }
+            },
+            {
+                'name': 'bigru',
+                'units': 96 * 3,
+                'kernel_initializer': {
+                    'name': 'RandomUniform',
+                    'minval': -0.1,
+                    'maxval': 0.1
+                },
+                'kernel_regularizer': {
+                    'name': 'l2',
+                    'l': 1e-4
+                }
             },
             {
                 'name': 'dense',
@@ -99,10 +132,6 @@ def get_args(config, vocab_size=0):
                     'name': 'l2',
                     'l': 1e-4
                 }
-            },
-            {
-                'name': 'bigru',
-                'units': 96 * 3
             },
             {
                 'name': 'bigru',

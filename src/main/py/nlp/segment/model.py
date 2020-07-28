@@ -113,9 +113,9 @@ def build_embedding_layer(args):
     #     模型中后续的层必须都支持masking，否则会抛出异常。如果该值为True，则下标0在字典中不可用，input_dim应设置为 | vocabulary | + 2。
 
     return Embedding(
-        input_dim=args.vocab_size,
+        input_dim=args.input_dim,
         output_dim=args.output_dim,
-        input_shape=args.input_shape,
+        input_length=args.input_length,
         # embeddings_initializer
         trainable=args.trainable,
         mask_zero=args.mask
@@ -188,21 +188,30 @@ def build_tdd_layer(args):
     return TimeDistributed(Dense(args.num_labels, activation='softmax'))
 
 
-def build_crf_model(vocab_size, num_labels):
+def build_crf_model(vocab_size, num_labels, seq_len):
     model = Sequential()
 
-    embedding_layer = build_embedding_layer(vocab_size)
-    model.add(embedding_layer)
-    # model.add(Bidirectional(LSTM(HIDDEN_UNITS // 2, return_sequences=True)))
-    # model.add(Dense(NUM_CLASS, activation='softmax'))
+    # embedding_layer = Embedding(
+    #     input_dim=vocab_size,
+    #     output_dim=128,
+    #     # embeddings_initializer
+    #     trainable=True,
+    #     mask_zero=True
+    # )
+    # model.add(embedding_layer)
+    # model.add(Bidirectional(LSTM(num_labels, return_sequences=True, activation="tanh"), merge_mode='sum'))
+    # model.add(Bidirectional(LSTM(num_labels, return_sequences=True, activation="softmax"), merge_mode='sum'))
+    # crf_layer = CRF(num_labels, name='crf_layer')
+    # model.add(crf_layer)
 
-    # model.add(Bidirectional(LSTM(NUM_CLASS, return_sequences=True, activation="tanh"), merge_mode='sum'))
-    # model.add(Bidirectional(LSTM(NUM_CLASS, return_sequences=True, activation="softmax"), merge_mode='sum'))
-
-    crf_layer = build_crf_layer(num_labels)
+    model.add(Embedding(input_dim=vocab_size, output_dim=128, input_shape=(seq_len,)))  # mask_zero=True　は上手くいかない
+    model.add(Bidirectional(LSTM(200, return_sequences=True), merge_mode='ave'))
+    model.add(Dense(num_labels, activation='softmax'))
+    crf_layer = CRF(num_labels, name='crf_layer')
     model.add(crf_layer)
+
     model.compile('adam', loss=crf_loss, metrics=[crf_layer.get_accuracy])
-    # model.compile(loss=crf_layer.loss, optimizer='adam', metrics=[crf_layer.accuracy])
+    print(model.summary())
 
     return model
 
@@ -244,15 +253,34 @@ def build_glove_bi_lstm_crf_model(vocab_size, num_labels, word_to_id_func):
     return model
 
 
-def build_glove_bi_gru_crf_model(vocab_size, num_labels, word_to_id_func):
+def build_glove_bi_gru_crf_model(dataset, vec_path, seq_len):
+    num_labels = dataset.num_labels
+
     model = Sequential()
-    embedding_layer = build_glove_layer(vocab_size, word_to_id_func)
+    embedding_vector = EmbeddingVectors(dataset, vec_path, 'glove')
+    embedding_layer = Embedding(input_dim=embedding_vector.vocab_size,
+                     output_dim=embedding_vector.vector_size,
+                     # embeddings_initializer=tf.keras.initializers.Constant(glove),
+                     weights=[embedding_vector.weights],
+                     input_length=seq_len,
+                     trainable=True,
+                     mask_zero=True
+                     )
+
+    # embedding_layer = Embedding(
+    #     input_dim=dataset.vocab_size,
+    #     output_dim=128,
+    #     trainable=True,
+    #     mask_zero=True,
+    #     input_length=seq_len
+    # )
+
     model.add(embedding_layer)
 
     model.add(Bidirectional(GRU(200, return_sequences=True), merge_mode='ave'))
     model.add(Dense(num_labels, activation='softmax'))
 
-    crf_layer = build_crf_layer(num_labels)
+    crf_layer = CRF(num_labels, name='crf_layer')
     model.add(crf_layer)
     model.compile('adam', loss=crf_loss, metrics=[crf_layer.get_accuracy])
 
@@ -270,7 +298,7 @@ def build_glove_bi_gru2_crf_model(args, dataset):
     embedding_glove_path = args.glove_path
 
     model = Sequential()
-    embedding_layer = build_glove_layer(args, dataset)
+    embedding_layer = build_glove_layer(args.layers[0], dataset)
     model.add(embedding_layer)
 
     model.add(Bidirectional(GRU(256, return_sequences=True)))
@@ -283,6 +311,55 @@ def build_glove_bi_gru2_crf_model(args, dataset):
     model.add(crf_layer)
 
     model.compile('adam', loss=crf_loss, metrics=[crf_layer.get_accuracy])
+
+    # tf.keras.utils.plot_model(model, show_shapes=True, dpi=64)
+    return model
+
+
+def build_glove_bi_gru2_crf_model(args, dataset):
+    DROPOUT_RATE = 0.3
+
+    model = Sequential()
+
+    embedd = Embedding(
+        input_dim=args.vocab_size,
+        output_dim=args.output_dim,
+        # input_shape=args.input_shape,
+        # embeddings_initializer
+        trainable=True,
+        mask_zero=True
+    )
+    model.add(embedd)
+    # model.add(build_glove_layer(args.layers[0], dataset))
+
+    model.add(Bidirectional(GRU(96 * 3, return_sequences=True)))
+    model.add(Bidirectional(GRU(96 * 3, return_sequences=True)))
+    # model.add(build_bigru_layer(args.layers[1]))
+    # model.add(build_bigru_layer(args.layers[2]))
+
+    # model.add(Dropout(DROPOUT_RATE))
+
+    model.add(Dense(5, activation='softmax'))
+    # model.add(build_dense_layer(args.layers[3]))
+
+    crf_layer = CRF(5, name='crf_layer')
+    model.add(crf_layer)
+    # model.add(build_crf_layer(args.layers[4]))
+
+    # layer_dict = build_layers()
+    # model = Sequential()
+    # for layer_args in args.layers:
+    #     build_layer_func = layer_dict[layer_args.name]
+    #     print('build layer:'+layer_args.name)
+    #     if layer_args.name is 'glove':
+    #         model_layer = build_layer_func(layer_args, dataset)
+    #     else:
+    #         model_layer = build_layer_func(layer_args)
+    #     model.add(model_layer)
+
+    # model.compile('adam', loss=crf_loss, metrics=[crf_layer.get_accuracy])
+    model.compile(optimizer=build_optimizer(args.optimizer), loss=build_loss(args.loss),
+                  metrics=build_metrics(args.metrics))
 
     # tf.keras.utils.plot_model(model, show_shapes=True, dpi=64)
     return model

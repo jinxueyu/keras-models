@@ -54,7 +54,7 @@ def get_config():
     return build_object_dict(config_dict)
 
 
-def get_args(config):
+def get_args(config, vocab_size=0):
     model_name = 'seg-glove-bi-gru2-crf-model-mask'
     glove_path = os.path.join(config.data_path, config.glove_path)
 
@@ -72,18 +72,21 @@ def get_args(config):
         'epochs': 15,
         'validation_split': 0.1,
         'layers': [
-            {
-                'name': 'glove',
-                'vec_path': glove_path,
-                'input_length': 99,
-                'mask': True,
-                'trainable': True
-            },
             # {
-            #     'name': 'embedding',
-            #     'vocab_size': vocab_size,
-            #     '': 96  # 128
+            #     'name': 'glove',
+            #     'vec_path': glove_path,
+            #     'input_length': 100,
+            #     'mask': True,
+            #     'trainable': True
             # },
+            {
+                'name': 'embedding',
+                'input_dim': vocab_size,
+                'output_dim': 96,
+                'input_length': 100,  # < 128
+                'trainable': True,
+                'mask': True
+            },
             {
                 'name': 'dense',
                 'units': 96,
@@ -116,7 +119,8 @@ def get_args(config):
                 'kernel_regularizer': {
                     'name': 'l2',
                     'l': 1e-4
-                }
+                },
+                'activation': 'softmax'
             },
             {
                 'name': 'crf',
@@ -160,9 +164,9 @@ def evaluation(args, dataset):
 if __name__ == '__main__':
     # seg-glove-bi-gru2-td-crf-model-mask  correct : 1597.000000  0.400753  P: 0.849083  R: 0.820235
 
-    config = get_config()
-    args = get_args(config)
     dataset = DataProcessor()
+    config = get_config()
+    args = get_args(config, dataset.vocab_size)
 
     train(args, dataset)
 

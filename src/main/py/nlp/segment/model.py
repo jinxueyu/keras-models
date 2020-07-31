@@ -1,11 +1,15 @@
+import json
+import os
+import shutil
+import sys
+
 import numpy as np
-import tensorflow
+import tensorflow as tf
 from tensorflow.keras import regularizers, activations, optimizers
 from tensorflow.keras.layers import Embedding
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Bidirectional, LSTM, GRU, TimeDistributed
+from tensorflow.keras.layers import Dense, Bidirectional, LSTM, GRU, TimeDistributed, Dropout, Activation
 from tensorflow.keras import initializers
-from tensorflow.keras.layers import Dropout
 
 from addons.layers.crf import CRF
 from addons.losses.crf import crf_loss
@@ -20,6 +24,9 @@ def build_kernel_initializer(args):
     kernel_initializer = None
     if args.name == 'RandomUniform':
         kernel_initializer = initializers.RandomUniform(args.minval, args.maxval)
+    if args.name == 'GlorotNormal':
+        kernel_initializer = initializers.GlorotNormal(args.minval, args.maxval)
+
 
     return kernel_initializer
 
@@ -128,7 +135,7 @@ def build_crf_layer(args):
 
 
 def build_lstm_layer(args):
-    return LSTM(args.hidden_size, return_sequences=True)
+    return LSTM(args.units, return_sequences=True)
 
 
 def build_gru_layer(args):
@@ -189,6 +196,10 @@ def build_tdd_layer(args):
     return TimeDistributed(Dense(args.num_labels, activation='softmax'))
 
 
+def build_dropout_layer(args):
+    return Dropout(args.dropout_rate)
+
+
 def build_crf_model(vocab_size, num_labels, seq_len):
     model = Sequential()
 
@@ -226,6 +237,25 @@ def build_glove_crf_model(vocab_size, num_labels, word_to_id_func):
     crf_layer = build_crf_layer(num_labels)
     model.add(crf_layer)
     model.compile('adam', loss=crf_loss, metrics=[crf_layer.get_accuracy])
+    return model
+
+
+def build_lstm_model(input_dim, input_length, num_labels, lstm_units):
+    model = Sequential()
+
+    model.add(Embedding(input_dim, lstm_units, input_length=input_length))
+    model.add(LSTM(lstm_units, return_sequences=True))
+    model.add(LSTM(lstm_units))
+    model.add(Dropout(0.5))
+    model.add(Dense(num_labels))  # , activation='softmax'))
+    model.add(Activation('softmax'))
+
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer='adam',
+        metrics=['accuracy']
+    )
+
     return model
 
 
@@ -286,10 +316,6 @@ def build_glove_bi_gru_crf_model(dataset, vec_path, seq_len):
     model.compile('adam', loss=crf_loss, metrics=[crf_layer.get_accuracy])
 
     return model
-
-
-def build_dropout_layer(args):
-    return Dropout(args.dropout_rate)
 
 
 def build_glove_bi_gru2_crf_model(args, dataset):
@@ -366,7 +392,25 @@ def build_glove_bi_gru2_crf_model(args, dataset):
     return model
 
 
-def save_train_result(history, loss_name, acc_name, model_path):
+def save_train_result(model, args, history, loss_name, acc_name):
+
+    model_path = args.model_path
+    if os.path.isdir(model_path):
+        shutil.rmtree(model_path)
+    os.mkdir(model_path)
+
+    f = open(model_path+'/args.json', 'w')
+    f.write(json.dumps(args))
+    f.close()
+
+    f = open(model_path + '/history.json', 'w')
+    f.write(json.dumps(history.history))
+    f.close()
+
+    tf.keras.utils.plot_model(model, to_file=model_path + '/model.png', show_shapes=True, dpi=64)
+
+    model.save(model_path+'/model.h5')
+
     history_values = history.history
 
     loss_values = history_values[loss_name]
@@ -376,12 +420,12 @@ def save_train_result(history, loss_name, acc_name, model_path):
 
     plt.plot(epochs_point, loss_values, 'bo', label='Training Loss')
     plt.plot(epochs_point, val_loss_values, 'b', label='Validation Loss')
-    plt.title('Training and Validation Loss')
+    plt.title('Loss of Training and Validation')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
 
-    plt.savefig(model_path+'_loss.png')
+    plt.savefig(model_path+'/loss.png')
     plt.show()
 
     plt.clf()
@@ -391,12 +435,12 @@ def save_train_result(history, loss_name, acc_name, model_path):
 
     plt.plot(epochs_point, acc_values, 'bo', label='Training Acc')
     plt.plot(epochs_point, val_acc_values, 'b', label='Validation Acc')
-    plt.title('Training and Validation Acc')
+    plt.title('Acc of Training and Validation')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
 
-    plt.savefig(model_path+'_acc.png')
+    plt.savefig(model_path+'/acc.png')
     plt.show()
 
 
@@ -407,7 +451,9 @@ def build_layers():
         'bigru':   build_bigru_layer,
         'dense':   build_dense_layer,
         'dropout': build_dropout_layer,
-        'crf':     build_crf_layer
+        'crf':     build_crf_layer,
+        'lstm':    build_lstm_layer
+        # TimeDistributed
     }
 
     return layers

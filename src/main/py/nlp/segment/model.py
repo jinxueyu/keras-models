@@ -25,7 +25,7 @@ def build_kernel_initializer(args):
     if args.name == 'RandomUniform':
         kernel_initializer = initializers.RandomUniform(args.minval, args.maxval)
     if args.name == 'GlorotNormal':
-        kernel_initializer = initializers.GlorotNormal(args.minval, args.maxval)
+        kernel_initializer = initializers.GlorotNormal()
 
 
     return kernel_initializer

@@ -95,6 +95,12 @@ def build_dense_layer(args):
     )
 
 
+def get_args_attr(args, key, default=None):
+    if hasattr(args, key):
+        return args[key]
+    return default
+
+
 def build_glove_layer(args, dataset):
     vec_path = args.vec_path
     input_length = args.input_length
@@ -141,7 +147,9 @@ def build_lstm_layer(args):
 def build_gru_layer(args):
     return GRU(
         args.hidden_size,
-        return_sequences=True
+        return_sequences=True,
+        dropout=get_args_attr(args, 'dropout', 0.),
+        recurrent_dropout=get_args_attr(args, 'recurrent_dropout', 0.),
     )
 
 

@@ -440,7 +440,7 @@ def main(_):
       vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
 
   input_files = []
-  for input_pattern in FLAGS.input_file.split(","):
+  for input_pattern in FLAGS.input_file.split_image_block(","):
     input_files.extend(tf.gfile.Glob(input_pattern))
 
   tf.logging.info("*** Reading from input files ***")
@@ -453,7 +453,7 @@ def main(_):
       FLAGS.short_seq_prob, FLAGS.masked_lm_prob, FLAGS.max_predictions_per_seq,
       rng)
 
-  output_files = FLAGS.output_file.split(",")
+  output_files = FLAGS.output_file.split_image_block(",")
   tf.logging.info("*** Writing to output files ***")
   for output_file in output_files:
     tf.logging.info("  %s", output_file)

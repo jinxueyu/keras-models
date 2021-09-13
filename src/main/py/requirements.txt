@@ -1,1 +1,5 @@
-tensorflow_addons
+tensorflow
+tensorflow_hub
+paddlepaddle
+#paddle 要求 opencv-python==4.2.0.32)
+#tensorflow_addons

@@ -19,7 +19,12 @@ def wrap(text, label, index_word):
     return word_list
 
 
-class SegmentBase(object):
+class ISegmentBase(object):
+    def seg(self, text):
+        pass
+
+
+class SegmentBase(ISegmentBase):
     def __init__(self, model, dataset):
         self.__model = model  # load_model(model_path, custom_objects=custom_objects)
         self.dataset = dataset

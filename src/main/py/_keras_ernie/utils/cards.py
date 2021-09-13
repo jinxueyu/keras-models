@@ -26,5 +26,5 @@ def get_cards():
     num = 0
     cards = os.environ.get('CUDA_VISIBLE_DEVICES', '')
     if cards != '':
-        num = len(cards.split(","))
+        num = len(cards.split_image_block(","))
     return num

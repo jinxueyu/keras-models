@@ -32,9 +32,9 @@ def _parse_data(fh):
         split_text = '\n'
 
     string = fh.read().decode('utf-8')
-    data = [[row.split() for row in sample.split(split_text)] for
+    data = [[row.split_image_block() for row in sample.split_image_block(split_text)] for
             sample in
-            string.strip().split(split_text + split_text)]
+            string.strip().split_image_block(split_text + split_text)]
     fh.close()
     return data
 

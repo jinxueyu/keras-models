@@ -197,7 +197,7 @@ def text_segmentate(text, maxlen, seps='\n', strips=None):
     """
     text = text.strip().strip(strips)
     if seps and len(text) > maxlen:
-        pieces = text.split(seps[0])
+        pieces = text.split_image_block(seps[0])
         text, texts = '', []
         for i, p in enumerate(pieces):
             if text and p and len(text) + len(p) > maxlen - 1:

@@ -343,7 +343,7 @@ def read_examples(input_file):
 def main(_):
   tf.logging.set_verbosity(tf.logging.INFO)
 
-  layer_indexes = [int(x) for x in FLAGS.layers.split(",")]
+  layer_indexes = [int(x) for x in FLAGS.layers.split_image_block(",")]
 
   bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
 

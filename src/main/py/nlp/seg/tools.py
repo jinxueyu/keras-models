@@ -1,4 +1,4 @@
-from nlp.segment.utils import evaluation
+from nlp.seg.utils import evaluation
 
 try:
     from LAC import LAC
@@ -6,7 +6,7 @@ except ImportError:
     pass
 
 from nlp.corpus.reader import DataProcessor
-from nlp.segment.crf import CRFSegment
+from nlp.seg.crf import CRFSegment
 
 
 def evaluation_crf(gold_path, ):

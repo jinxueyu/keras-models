@@ -1,5 +1,13 @@
 from nlp.lac import LAC
 from nlp.lac.custom import Customization
+from nlp.seg.seg import ISegmentBase
+
+
+class LacSegment(ISegmentBase):
+    __lac = LAC(mode='seg')
+
+    def seg(self, text):
+        return self.__lac.run(text)
 
 
 def test():
@@ -66,7 +74,7 @@ if __name__ == '__main__':
     model_path = data_path+model_path+'lac/msr_seg_model'
     print(model_path)
 
-    lac = LAC(model_path=model_path, mode='seg')
+    lac = LAC(model_path=model_path, mode='lac')
     text = [
         '我是中国人',
         '我爱北京天安门',
@@ -74,7 +82,8 @@ if __name__ == '__main__':
         '李冰冰从马上跳下来',
         '武汉市长江大桥发表重要讲话',
         '人们常说生活是一部教科书，而血与火的战争更是不可多得的教科书，她确实是名副其实的‘我的大学’。',
-        '为了有效地解决“高产穷县”的矛盾，吉林省委、省政府深入实际，调查研究，确定了实施“三大一强”的农业发展战略，即经过的努力，粮食产量要再上两个台阶，畜牧业要成为农民增收的支柱产业，农副产品加工业要成为全省工业和财政收入的一大支柱，真正成为粮食"'
+        '为了有效地解决“高产穷县”的矛盾，吉林省委、省政府深入实际，调查研究，确定了实施“三大一强”的农业发展战略，即经过的努力，粮食产量要再上两个台阶，畜牧业要成为农民增收的支柱产业，农副产品加工业要成为全省工业和财政收入的一大支柱，真正成为粮食"',
+        '平安银行董事长是谁'
     ]
     r = lac.run(text)
     for x in r:

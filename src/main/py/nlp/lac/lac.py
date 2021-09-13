@@ -40,8 +40,8 @@ def _get_abs_path(path): return os.path.normpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__), path))
 
 
-DEFAULT_LAC = _get_abs_path('lac_model')
-DEFAULT_SEG = _get_abs_path('seg_model')
+DEFAULT_LAC = _get_abs_path('../corpus/lac/lac_model')
+DEFAULT_SEG = _get_abs_path('../corpus/lac/seg_model')
 
 
 class LAC(object):

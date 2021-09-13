@@ -1,10 +1,9 @@
 import configparser
 import os
-import tensorflow as tf
 from nlp.corpus.reader import DataProcessor
-from nlp.segment.model import build_model, save_train_result
-from nlp.segment.seg import SegmentBase
-from nlp.segment.utils import evaluation_seg
+from nlp.seg.model import build_model, save_train_result, build_lstm_model, get_args_attr
+from nlp.seg.seg import SegmentBase
+from nlp.seg.utils import evaluation_seg
 from util.object_dict import build_object_dict
 
 
@@ -15,7 +14,7 @@ class CRFSegment(SegmentBase):
 
         if args.mode == 'seg':
             self.model.load_weights(self.model_path)
-        #     todo args base segment
+        #     todo args base seg
         SegmentBase.__init__(self, self.model, dataset)
 
         self.args = args
@@ -23,7 +22,7 @@ class CRFSegment(SegmentBase):
 
     def train(self, data_path):
         print(self.model.summary())
-        tf.keras.utils.plot_model(self.model, to_file=self.model_path+'_model.png', show_shapes=True, dpi=64)
+
         train_x, train_y = self.dataset.process_input_data(data_path, maxlen=self.seq_max_len)
         history = self.model.fit(
             train_x, train_y,
@@ -31,7 +30,9 @@ class CRFSegment(SegmentBase):
             epochs=self.args.epochs,
             validation_split=self.args.validation_split
         )
-        self.model.save(self.model_path)
+        # self.model.save(self.model_path)
+        save_train_result(self.model, args, history, 'loss', 'crf_acc')
+
         return history
 
 
@@ -69,7 +70,7 @@ def get_args(config, vocab_size=0):
         'loss': {'name': 'crf_loss'},
         'metrics': [{'name': 'crf_acc_mask'}],
         'batch_size': 512,
-        'epochs': 15,
+        'epochs': 30,
         'validation_split': 0.1,
         'layers': [
             # {
@@ -92,24 +93,28 @@ def get_args(config, vocab_size=0):
                     'maxval': 0.1
                 }
             },
-            {
-                'name': 'dense',
-                'units': 96,
-                'return_sequences': True,
-                'merge_mode': 'concat',
-                'kernel_initializer': {
-                    'name': 'RandomUniform',
-                    'minval': -0.1,
-                    'maxval': 0.1
-                },
-                'kernel_regularizer': {
-                    'name': 'l2',
-                    'l': 1e-4
-                }
-            },
+            # {
+            #     'name': 'dense',
+            #     'units': 96,
+            #     'kernel_initializer': {
+            #         'name': 'RandomUniform',
+            #         'minval': -0.1,
+            #         'maxval': 0.1
+            #     },
+            #     'kernel_regularizer': {
+            #         'name': 'l2',
+            #         'l': 1e-4
+            #     }
+            # },
+            # {
+            #     'name': 'bigru',
+            #     'units': 96 * 3
+            # },
             {
                 'name': 'bigru',
                 'units': 96 * 3,
+                'return_sequences': True,
+                'merge_mode': 'sum',
                 'kernel_initializer': {
                     'name': 'RandomUniform',
                     'minval': -0.1,
@@ -120,22 +125,30 @@ def get_args(config, vocab_size=0):
                     'l': 1e-4
                 }
             },
-            {
-                'name': 'dense',
-                'units': 96,
-                'kernel_initializer': {
-                    'name': 'RandomUniform',
-                    'minval': -0.1,
-                    'maxval': 0.1
-                },
-                'kernel_regularizer': {
-                    'name': 'l2',
-                    'l': 1e-4
-                }
-            },
+            # {
+            #     'name': 'dropout',
+            #     'dropout_rate': 0.2
+            # },
             {
                 'name': 'bigru',
-                'units': 96 * 3
+                'units': 96 * 3,
+                'return_sequences': True,
+                'merge_mode': 'sum',
+                'kernel_initializer': {
+                    'name': 'RandomUniform',
+                    'minval': -0.1,
+                    'maxval': 0.1
+                },
+                'kernel_regularizer': {
+                    'name': 'l2',
+                    'l': 1e-4
+                },
+                'dropout': 0.,
+                'recurrent_dropout': 0.
+            },
+            {
+                'name': 'dropout',
+                'dropout_rate': 0.2
             },
             {
                 'name': 'dense',
@@ -154,6 +167,7 @@ def get_args(config, vocab_size=0):
             {
                 'name': 'crf',
                 'output_dim': 5
+                #  activation and something
             }
         ]
     }
@@ -161,7 +175,7 @@ def get_args(config, vocab_size=0):
     args = build_object_dict(args_dict)
 
     args.data_path = config.data_path
-    args.model_path = os.path.join(config.data_path, config.model_path, model_name + '.h5')
+    args.model_path = os.path.join(config.data_path, config.model_path, model_name)
     args.train_data_path = os.path.join(config.data_path, config.corpus_path)
 
     return args
@@ -176,8 +190,6 @@ def train(args, dataset):
     seg = CRFSegment(args, dataset)
     history = seg.train(args.train_data_path)
 
-    save_train_result(history, 'loss', 'crf_acc', args.model_path)
-
 
 def evaluation(args, dataset):
     args.mode = 'seg'
@@ -188,6 +200,25 @@ def evaluation(args, dataset):
 
     seg = CRFSegment(args, dataset)
     evaluation_seg(seg, gold)
+
+
+def train_lstm():
+    data_path = os.path.join(config.data_path, config.corpus_path)
+    dataset = DataProcessor()
+    input_dim = dataset.vocab_size
+    input_length = 128
+    num_labels = 5
+    lstm_units = 128
+
+    model = build_lstm_model(input_dim, input_length, num_labels, lstm_units)
+
+    train_x, train_y = dataset.process_input_data(data_path, maxlen=input_length)
+    history = model.fit(
+        train_x, train_y,
+        batch_size=512,
+        epochs=20,
+        validation_split=0.1
+    )
 
 
 if __name__ == '__main__':
@@ -219,6 +250,4 @@ if __name__ == '__main__':
     #     print(crf_seg.seg(text))
 
     # evaluation(args, dataset)
-
-
 

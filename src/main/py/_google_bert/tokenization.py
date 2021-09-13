@@ -154,7 +154,7 @@ def whitespace_tokenize(text):
   text = text.strip()
   if not text:
     return []
-  tokens = text.split()
+  tokens = text.split_image_block()
   return tokens
 
 

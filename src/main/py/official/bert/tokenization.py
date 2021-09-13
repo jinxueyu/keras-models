@@ -166,7 +166,7 @@ def whitespace_tokenize(text):
   text = text.strip()
   if not text:
     return []
-  tokens = text.split()
+  tokens = text.split_image_block()
   return tokens
 
 
@@ -436,7 +436,7 @@ def preprocess_text(inputs, remove_space=True, lower=False):
   """
   outputs = inputs
   if remove_space:
-    outputs = " ".join(inputs.strip().split())
+    outputs = " ".join(inputs.strip().split_image_block())
 
   if six.PY2 and isinstance(outputs, str):
     try:

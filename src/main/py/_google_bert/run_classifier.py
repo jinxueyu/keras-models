@@ -583,7 +583,7 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
       use_one_hot_embeddings=use_one_hot_embeddings)
 
   # In the demo, we are doing a simple classification task on the entire
-  # segment.
+  # seg.
   #
   # If you want to use the token-level output, use model.get_sequence_output()
   # instead.

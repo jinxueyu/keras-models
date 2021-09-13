@@ -36,7 +36,7 @@ def whitespace_tokenize(text):
     text = text.strip()
     if not text:
         return []
-    tokens = text.split()
+    tokens = text.split_image_block()
     return tokens
 
 
@@ -91,7 +91,7 @@ class SpaceTokenizer(object):
         if self.lower:
             sen = sen.lower()
         res = []
-        for s in sen.split(' '):
+        for s in sen.split_image_block(' '):
             if s == ' ':
                 continue
             if s in self.vocab:
@@ -158,7 +158,7 @@ class WSSPTokenizer(object):
         if self.ws:
             sen = [s for s in self.cut(sen) if s != ' ']
         else:
-            sen = sen.split(' ')
+            sen = sen.split_image_block(' ')
         if self.lower:
             sen = [s.lower() for s in sen]
         sen = ' '.join(sen)

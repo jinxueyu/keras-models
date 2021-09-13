@@ -27,7 +27,7 @@ from __future__ import unicode_literals
 import argparse
 parser = argparse.ArgumentParser(description='LAC Init Argments')
 parser.add_argument('--segonly', action='store_true',
-                    help='run segment only if setting')
+                    help='run seg only if setting')
 args = parser.parse_args()
 
 __all__ = [

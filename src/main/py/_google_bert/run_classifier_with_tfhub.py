@@ -51,7 +51,7 @@ def create_model(is_training, input_ids, input_mask, segment_ids, labels,
       as_dict=True)
 
   # In the demo, we are doing a simple classification task on the entire
-  # segment.
+  # seg.
   #
   # If you want to use the token-level output, use
   # bert_outputs["sequence_output"] instead.

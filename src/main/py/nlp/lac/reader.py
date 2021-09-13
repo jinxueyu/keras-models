@@ -79,9 +79,9 @@ class Dataset(object):
         return sum(1 for line in open(filename, "r"))
 
     def parse_seg(self, line):
-        """convert segment data to lac data format"""
+        """convert seg data to lac data format"""
         tags = []
-        words = line.strip().split()
+        words = line.strip().split_image_block()
 
         for word in words:
             if len(word) == 1:
@@ -96,7 +96,7 @@ class Dataset(object):
         tags = []
         words = []
 
-        items = line.strip().split()
+        items = line.strip().split_image_block()
         for item in items:
             word = item[:item.rfind('/')]
             tag = item[item.rfind('/') + 1:]
@@ -152,8 +152,8 @@ class Dataset(object):
                         words, labels = self.parse_tag(line)
                     else:
                         words, labels = line.strip("\n").split("\t")
-                        words = words.split("\002")
-                        labels = labels.split("\002")
+                        words = words.split_image_block("\002")
+                        labels = labels.split_image_block("\002")
 
                     word_ids = self.word_to_ids(words)
                     label_ids = self.label_to_ids(labels)

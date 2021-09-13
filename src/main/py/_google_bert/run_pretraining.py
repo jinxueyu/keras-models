@@ -414,7 +414,7 @@ def main(_):
   tf.gfile.MakeDirs(FLAGS.output_dir)
 
   input_files = []
-  for input_pattern in FLAGS.input_file.split(","):
+  for input_pattern in FLAGS.input_file.split_image_block(","):
     input_files.extend(tf.gfile.Glob(input_pattern))
 
   tf.logging.info("*** Input Files ***")
